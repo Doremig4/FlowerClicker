@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>💰 방치형 클릭 게임</title>
+  <title>꽃심어서 뒷돈벌기</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -13,7 +13,7 @@
     <div>업그레이드 비용: <span id="upgrade-cost">10</span>원</div>
     <button id="upgrade-btn">업그레이드</button>
     <div id="flower-btn-row">
-      <button id="flower-btn">꽃 생성</button>
+      <button id="flower-btn">꽃 심기</button>
       <span style="margin:0 16px 0 8px;align-self:center;">비용: <span id="flower-cost">20</span>원</span>
       <button id="flower-income-upgrade-btn">꽃 수익 업그레이드</button>
       <span style="margin-left:8px;align-self:center;">비용: <span id="flower-income-upgrade-cost">50</span>원</span>
@@ -186,19 +186,20 @@
       bird.alt = 'bird';
       bird.style.position = 'absolute';
       bird.style.top = '0px';
-      bird.style.width = '200px';
-      bird.style.height = '130px';
+      bird.style.width = '300px';
+      bird.style.height = '195px';
       bird.style.zIndex = 4000;
       bird.style.pointerEvents = 'none';
+      bird.style.userSelect = 'none';
       // 새가 왼쪽에서 오른쪽 또는 오른쪽에서 왼쪽으로 랜덤하게 이동
       const fromLeft = Math.random() < 0.5;
-      let birdX = fromLeft ? -120 : window.innerWidth;
+      let birdX = fromLeft ? -180 : window.innerWidth;
       bird.style.left = birdX + 'px';
       document.body.appendChild(bird);
 
       // 새 이동 속도 및 방향
       const speed = 3 + Math.random() * 2; // px/frame
-      const targetX = fromLeft ? window.innerWidth : -120;
+      const targetX = fromLeft ? window.innerWidth : -180;
       // 알을 떨어뜨릴 위치(새가 화면 중간쯤에 왔을 때)
       const eggDropX = fromLeft
         ? Math.random() * (window.innerWidth * 0.5) + window.innerWidth * 0.25
@@ -214,7 +215,7 @@
           spawnEgg(birdX + 50, 80); // 새의 중앙 아래에서 알 떨어뜨림
         }
         // 새가 화면을 벗어나면 제거
-        if ((fromLeft && birdX > window.innerWidth) || (!fromLeft && birdX < -120)) {
+        if ((fromLeft && birdX > window.innerWidth) || (!fromLeft && birdX < -180)) {
           bird.remove();
         } else {
           requestAnimationFrame(moveBird);
@@ -236,6 +237,7 @@
       egg.style.objectFit = 'contain';
       egg.style.zIndex = 3500;
       egg.style.cursor = 'pointer';
+      egg.style.userSelect = 'none';
       document.body.appendChild(egg);
       let y = startY;
       let velocity = 0;
@@ -253,7 +255,7 @@
           // 알이 바닥에 닿으면 2초 후 사라짐 (클릭 안 했을 때만)
           setTimeout(() => {
             if (document.body.contains(egg)) egg.remove();
-          }, 2000);
+          }, 10000);
         }
       }
       fall();
@@ -261,7 +263,7 @@
       // 알 클릭 시 보상
       egg.addEventListener('click', function onClick() {
         // 보상 금액: 꽃당 수익 x 100
-        const reward = flowerIncome * 100;
+        const reward = flowerIncome * 300;
         money += reward;
         updateUI();
         // 애니메이션 효과
@@ -270,6 +272,7 @@
         plus.textContent = `+${reward}원!`;
         plus.style.position = 'absolute';
         plus.style.left = `${rect.left + rect.width/2 - 30 + window.scrollX}px`;
+        plus.style.userSelect = 'none';
         plus.style.top = `${rect.top - 20 + window.scrollY}px`;
         plus.style.color = '#00ffcc';
         plus.style.fontWeight = 'bold';
@@ -286,8 +289,8 @@
 
     // 새 소환을 랜덤한 시간마다 반복
     function scheduleBird() {
-      const min = 30000; // 30초
-      const max = 120000; // 2분
+      const min = 15000; // 15초
+      const max = 60000; // 1분
       const delay = Math.random() * (max - min) + min;
       setTimeout(() => {
         spawnBirdAndEgg();

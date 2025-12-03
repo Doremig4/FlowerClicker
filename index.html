@@ -195,6 +195,10 @@
       const fromLeft = Math.random() < 0.5;
       let birdX = fromLeft ? -180 : window.innerWidth;
       bird.style.left = birdX + 'px';
+      // 왼쪽에서 오른쪽으로 이동할 때 이미지 뒤집기 (새 이미지가 기본적으로 왼쪽을 향하고 있다고 가정)
+      if (fromLeft) {
+        bird.style.transform = 'scaleX(-1)';
+      }
       document.body.appendChild(bird);
 
       // 새 이동 속도 및 방향
@@ -212,7 +216,9 @@
         // 알 떨어뜨리기
         if (!eggDropped && ((fromLeft && birdX >= eggDropX) || (!fromLeft && birdX <= eggDropX))) {
           eggDropped = true;
-          spawnEgg(birdX + 50, 80); // 새의 중앙 아래에서 알 떨어뜨림
+          // 새의 중앙 아래에서 알 떨어뜨림 (새의 너비가 300px이므로 중앙은 +150px)
+          const birdCenterX = birdX + 150;
+          spawnEgg(birdCenterX, 80);
         }
         // 새가 화면을 벗어나면 제거
         if ((fromLeft && birdX > window.innerWidth) || (!fromLeft && birdX < -180)) {

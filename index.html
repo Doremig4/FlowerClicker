@@ -4,12 +4,80 @@
   <meta charset="UTF-8" />
   <title>꽃심어서 뒷돈벌기</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    #fever-gauge {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      width: 220px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      padding: 8px;
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      z-index: 6000;
+      user-select: none;
+    }
+    #fever-label {
+      font-size: 14px;
+      letter-spacing: 0.5px;
+    }
+    #fever-bar {
+      width: 100%;
+      height: 14px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 7px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    #fever-fill {
+      height: 100%;
+      width: 0%;
+      background: #7cff7c;
+      transition: width 0.1s linear, background 0.2s ease;
+    }
+    #fever-count {
+      display: block;
+      text-align: right;
+      margin-top: 4px;
+      font-size: 12px;
+      opacity: 0.85;
+    }
+  </style>
 </head>
 <body>
 
+  <div id="fever-gauge">
+    <div id="fever-label">피버 게이지</div>
+    <div id="fever-bar">
+      <div id="fever-fill"></div>
+    </div>
+    <span id="fever-count">0 / 500</span>
+  </div>
+
+  <button id="boss-btn">보스 레이드</button>
+  <button id="shop-btn">상점</button>
+
+  <div id="boss-ui">
+    <div id="boss-ui-header">
+      <div class="boss-ui-left">
+        <span id="boss-ui-name">무당벌레</span>
+        <span id="boss-ui-timer">30.0s</span>
+      </div>
+      <button id="boss-surrender-btn">포기</button>
+    </div>
+    <div class="boss-ui-hp">
+      <div id="boss-ui-hp-fill"></div>
+    </div>
+  </div>
+
+  <div id="boss-battle-layer"></div>
+
   <div id="money-display">💰 0원</div>
   <div id="upgrade-container">
-    <div>클릭 당 <span id="per-click">1</span>원</div>
+    <div id="per-click-row">클릭 당 <span id="per-click">1</span>원</div>
     <div>업그레이드 비용: <span id="upgrade-cost">10</span>원</div>
     <button id="upgrade-btn">업그레이드</button>
     <div id="flower-btn-row">
@@ -23,290 +91,106 @@
     </div>
   </div>
 
-  <script>
-    let money = 0;
-    let perClick = 1;
-    let upgradeCost = 10;
-    let flowerCost = 20;
-    let flowerIncome = 1;
-    let flowerIncomeUpgradeCost = 50;
+  <div id="shop-panel">
+    <h2>상점</h2>
 
-    function updateUI() {
-      document.getElementById('money-display').innerText = `💰 ${money}원`;
-      document.getElementById('per-click').innerText = perClick;
-      document.getElementById('upgrade-cost').innerText = upgradeCost;
-      document.getElementById('flower-cost').innerText = flowerCost;
-      document.getElementById('flower-income').innerText = flowerIncome;
-      document.getElementById('flower-income-upgrade-cost').innerText = flowerIncomeUpgradeCost;
-    }
+    <div class="shop-item">
+      <div class="shop-item-title">🐦 새 알 확률 업그레이드</div>
+      <div class="shop-item-desc" id="shop-egg-desc">
+        새가 알을 낳을 확률을 올립니다.
+      </div>
+      <div class="shop-bar" id="shop-egg-bar">
+        <div class="shop-bar-seg"></div>
+        <div class="shop-bar-seg"></div>
+        <div class="shop-bar-seg"></div>
+        <div class="shop-bar-seg"></div>
+        <div class="shop-bar-seg"></div>
+      </div>
+      <button class="shop-item-btn" id="shop-egg-btn">구매</button>
+    </div>
 
-    // 클릭 시 돈 증가
-    document.body.addEventListener('click', (e) => {
-      // 업그레이드 버튼 클릭은 무시
-      if (e.target.id === 'upgrade-btn') return;
-      money += perClick;
-      updateUI();
+    <div class="shop-item">
+      <div class="shop-item-title">⏱ 새 등장 속도 업그레이드</div>
+      <div class="shop-item-desc" id="shop-birdspeed-desc">
+        새가 더 자주 등장합니다.
+      </div>
+      <div class="shop-bar" id="shop-birdspeed-bar">
+        <div class="shop-bar-seg"></div>
+        <div class="shop-bar-seg"></div>
+        <div class="shop-bar-seg"></div>
+        <div class="shop-bar-seg"></div>
+        <div class="shop-bar-seg"></div>
+      </div>
+      <button class="shop-item-btn" id="shop-birdspeed-btn">구매</button>
+    </div>
 
-      // 클릭 애니메이션 생성
-      const plus = document.createElement('div');
-      plus.id = 'plus-text';
-      plus.style.left = `${e.pageX}px`;
-      plus.style.top = `${e.pageY}px`;
-      plus.textContent = `+${perClick}`;
-      document.body.appendChild(plus);
+    <div class="shop-item">
+      <div class="shop-item-title">🔥 피버타임 지속시간 업그레이드</div>
+      <div class="shop-item-desc" id="shop-feverdur-desc">
+        피버타임이 더 오래 유지됩니다.
+      </div>
+      <div class="shop-bar" id="shop-feverdur-bar">
+        <div class="shop-bar-seg"></div>
+        <div class="shop-bar-seg"></div>
+        <div class="shop-bar-seg"></div>
+        <div class="shop-bar-seg"></div>
+        <div class="shop-bar-seg"></div>
+      </div>
+      <button class="shop-item-btn" id="shop-feverdur-btn">구매</button>
+    </div>
 
-      // 애니메이션 끝나면 제거
-      setTimeout(() => {
-        plus.remove();
-      }, 700);
-    });
+    <div class="shop-item">
+      <div class="shop-item-title">💫 피버 게이지 업그레이드</div>
+      <div class="shop-item-desc" id="shop-feverth-desc">
+        피버타임 진입에 필요한 클릭 수를 줄입니다.
+      </div>
+      <div class="shop-bar" id="shop-feverth-bar">
+        <div class="shop-bar-seg"></div>
+        <div class="shop-bar-seg"></div>
+        <div class="shop-bar-seg"></div>
+        <div class="shop-bar-seg"></div>
+        <div class="shop-bar-seg"></div>
+      </div>
+      <button class="shop-item-btn" id="shop-feverth-btn">구매</button>
+    </div>
 
-    // 업그레이드 버튼 클릭
-    document.getElementById('upgrade-btn').addEventListener('click', (e) => {
-      if (money >= upgradeCost) {
-        money -= upgradeCost;
-        perClick++;
-        // 업그레이드 비용은 2배씩 증가
-        upgradeCost = Math.floor(upgradeCost * 2);
-        updateUI();
-      } else {
-        // 돈이 부족할 때 효과(예: 버튼 흔들림)
-        const btn = document.getElementById('upgrade-btn');
-        btn.style.transform = 'scale(1.1)';
-        setTimeout(() => {
-          btn.style.transform = '';
-        }, 100);
-      }
-    });
+    <button id="shop-close-btn">닫기</button>
+  </div>
 
-    let flowerCount = 0;
-    document.getElementById('flower-btn').addEventListener('click', () => {
-      if (money >= flowerCost) {
-        money -= flowerCost;
-        flowerCost = Math.floor(flowerCost * 2);
-        updateUI();
-        const flower = document.createElement('img');
-        flower.src = 'img/flower.png';
-        flower.alt = 'flower';
-        flower.style.position = 'absolute';
-        flower.style.width = '180px';
-        flower.style.height = '180px';
-        flower.style.pointerEvents = 'none';
-        // 아래쪽 1/3 영역에만 생성
-        const minY = window.innerHeight * (2/3);
-        const maxY = window.innerHeight - 70;
-        const minX = 0;
-        const maxX = window.innerWidth - 180;
-        let x = Math.random() * (maxX - minX) + minX;
-        const y = Math.random() * (maxY - minY) + minY;
-        flower.style.left = `${x}px`;
-        flower.style.top = `${y}px`;
-        document.body.appendChild(flower);
+  <div id="boss-overlay">
+    <div id="boss-panel">
+      <div id="boss-panel-header">
+        <div>
+          <div class="boss-label">FIRST RAID</div>
+          <div class="boss-name">무당벌레</div>
+        </div>
+        <button id="boss-close-btn">✕</button>
+      </div>
+      <div id="boss-panel-body">
+        <div class="boss-stat">
+          <span>체력</span>
+          <div class="boss-stat-bar">
+          <div class="boss-stat-fill" id="boss-hp-fill"></div>
+          </div>
+          <span class="boss-stat-value" id="boss-hp-text">30,000 HP</span>
+        </div>
+        <div class="boss-stat">
+          <span>보상</span>
+          <div>🌸 꽃 수익 +20% (10분)</div>
+        </div>
+        <div id="boss-map">
+          <div id="boss-ground"></div>
+          <img id="boss-sprite" src="img/mudang.png" alt="무당벌레 보스" />
+        </div>
 
-        // 좌우로 계속 움직이는 애니메이션
-        let direction = Math.random() < 0.5 ? 1 : -1;
-        let speed = 1 + Math.random() * 1.5; // 1~2.5px/frame
-        function moveFlower() {
-          x += direction * speed;
-          // 화면 끝에 닿으면 방향 반전
-          if (x <= minX) {
-            x = minX;
-            direction = 1;
-          } else if (x >= maxX) {
-            x = maxX;
-            direction = -1;
-          }
-          flower.style.left = `${x}px`;
-          requestAnimationFrame(moveFlower);
-        }
-        moveFlower();
+        <div class="boss-desc">
+          빛나는 등딱지를 가진 거대한 무당벌레입니다. 일정 시간 안에 체력을 모두 제거하면 보상을 획득합니다.
+        </div>
+        <button id="boss-start-btn">레이드 시작</button>
+      </div>
+    </div>
+  </div>
 
-        // 꽃 개수 증가
-        flowerCount++;
-      } else {
-        // 돈이 부족할 때 효과(예: 버튼 흔들림)
-        const btn = document.getElementById('flower-btn');
-        btn.style.transform = 'scale(1.1)';
-        setTimeout(() => {
-          btn.style.transform = '';
-        }, 100);
-      }
-    });
-
-    // 꽃 자동 수익 (1초마다)
-    setInterval(() => {
-      if (flowerCount > 0) {
-        // 모든 꽃에 대해 애니메이션 표시
-        const flowers = document.querySelectorAll('img[alt="flower"]');
-        flowers.forEach(flower => {
-          // 꽃의 위치 계산
-          const rect = flower.getBoundingClientRect();
-          const plus = document.createElement('div');
-          plus.className = 'plus-flower';
-          plus.textContent = `+${flowerIncome}`;
-          plus.style.position = 'absolute';
-          plus.style.left = `${rect.left + rect.width/2 - 15 + window.scrollX}px`;
-          plus.style.top = `${rect.top - 20 + window.scrollY}px`;
-          plus.style.color = 'yellow';
-          plus.style.fontWeight = 'bold';
-          plus.style.fontSize = '28px';
-          plus.style.pointerEvents = 'none';
-          plus.style.animation = 'floatUp 0.7s ease-out';
-          plus.style.zIndex = 2000;
-          document.body.appendChild(plus);
-          setTimeout(() => plus.remove(), 700);
-        });
-        money += flowerCount * flowerIncome;
-        updateUI();
-      }
-    }, 1000);
-
-    // 꽃 수익 업그레이드 버튼 클릭
-    document.getElementById('flower-income-upgrade-btn').addEventListener('click', () => {
-      if (money >= flowerIncomeUpgradeCost) {
-        money -= flowerIncomeUpgradeCost;
-        flowerIncome++;
-        flowerIncomeUpgradeCost = Math.floor(flowerIncomeUpgradeCost * 2);
-        updateUI();
-      } else {
-        // 돈이 부족할 때 효과(예: 버튼 흔들림)
-        const btn = document.getElementById('flower-income-upgrade-btn');
-        btn.style.transform = 'scale(1.1)';
-        setTimeout(() => {
-          btn.style.transform = '';
-        }, 100);
-      }
-    });
-
-    // 새와 알 소환 함수
-    function spawnBirdAndEgg() {
-      // 새 생성 (bird.png)
-      const bird = document.createElement('img');
-      bird.src = 'img/bird.png';
-      bird.alt = 'bird';
-      bird.style.position = 'absolute';
-      bird.style.top = '0px';
-      bird.style.width = '300px';
-      bird.style.height = '195px';
-      bird.style.zIndex = 4000;
-      bird.style.pointerEvents = 'none';
-      bird.style.userSelect = 'none';
-      // 새가 왼쪽에서 오른쪽 또는 오른쪽에서 왼쪽으로 랜덤하게 이동
-      const fromLeft = Math.random() < 0.5;
-      let birdX = fromLeft ? -180 : window.innerWidth;
-      bird.style.left = birdX + 'px';
-      // 왼쪽에서 오른쪽으로 이동할 때 이미지 뒤집기 (새 이미지가 기본적으로 왼쪽을 향하고 있다고 가정)
-      if (fromLeft) {
-        bird.style.transform = 'scaleX(-1)';
-      }
-      document.body.appendChild(bird);
-
-      // 새 이동 속도 및 방향
-      const speed = 3 + Math.random() * 2; // px/frame
-      const targetX = fromLeft ? window.innerWidth : -180;
-      // 알을 떨어뜨릴 위치(새가 화면 중간쯤에 왔을 때)
-      const eggDropX = fromLeft
-        ? Math.random() * (window.innerWidth * 0.5) + window.innerWidth * 0.25
-        : Math.random() * (window.innerWidth * 0.5) + window.innerWidth * 0.25;
-      let eggDropped = false;
-
-      function moveBird() {
-        birdX += fromLeft ? speed : -speed;
-        bird.style.left = birdX + 'px';
-        // 알 떨어뜨리기
-        if (!eggDropped && ((fromLeft && birdX >= eggDropX) || (!fromLeft && birdX <= eggDropX))) {
-          eggDropped = true;
-          // 새의 중앙 아래에서 알 떨어뜨림 (새의 너비가 300px이므로 중앙은 +150px)
-          const birdCenterX = birdX + 150;
-          spawnEgg(birdCenterX, 80);
-        }
-        // 새가 화면을 벗어나면 제거
-        if ((fromLeft && birdX > window.innerWidth) || (!fromLeft && birdX < -180)) {
-          bird.remove();
-        } else {
-          requestAnimationFrame(moveBird);
-        }
-      }
-      moveBird();
-    }
-
-    // 알 떨어뜨리기 함수
-    function spawnEgg(x, startY) {
-      const egg = document.createElement('img');
-      egg.src = 'img/egg.png';
-      egg.alt = 'egg';
-      egg.style.position = 'absolute';
-      egg.style.left = x + 'px';
-      egg.style.top = startY + 'px';
-      egg.style.height = '120px';
-      egg.style.width = '';
-      egg.style.objectFit = 'contain';
-      egg.style.zIndex = 3500;
-      egg.style.cursor = 'pointer';
-      egg.style.userSelect = 'none';
-      document.body.appendChild(egg);
-      let y = startY;
-      let velocity = 0;
-      const gravity = 0.7;
-      let landed = false;
-      function fall() {
-        velocity += gravity;
-        y += velocity;
-        egg.style.top = y + 'px';
-        if (y < window.innerHeight - 120) {
-          requestAnimationFrame(fall);
-        } else {
-          egg.style.top = (window.innerHeight - 120) + 'px';
-          landed = true;
-          // 알이 바닥에 닿으면 2초 후 사라짐 (클릭 안 했을 때만)
-          setTimeout(() => {
-            if (document.body.contains(egg)) egg.remove();
-          }, 10000);
-        }
-      }
-      fall();
-
-      // 알 클릭 시 보상
-      egg.addEventListener('click', function onClick() {
-        // 보상 금액: 꽃당 수익 x 100
-        const reward = flowerIncome * 300;
-        money += reward;
-        updateUI();
-        // 애니메이션 효과
-        const rect = egg.getBoundingClientRect();
-        const plus = document.createElement('div');
-        plus.textContent = `+${reward}원!`;
-        plus.style.position = 'absolute';
-        plus.style.left = `${rect.left + rect.width/2 - 30 + window.scrollX}px`;
-        plus.style.userSelect = 'none';
-        plus.style.top = `${rect.top - 20 + window.scrollY}px`;
-        plus.style.color = '#00ffcc';
-        plus.style.fontWeight = 'bold';
-        plus.style.fontSize = '28px';
-        plus.style.pointerEvents = 'none';
-        plus.style.animation = 'floatUp 0.9s ease-out';
-        plus.style.zIndex = 4001;
-        document.body.appendChild(plus);
-        setTimeout(() => plus.remove(), 900);
-        // 알 제거
-        egg.remove();
-      });
-    }
-
-    // 새 소환을 랜덤한 시간마다 반복
-    function scheduleBird() {
-      const min = 15000; // 15초
-      const max = 60000; // 1분
-      const delay = Math.random() * (max - min) + min;
-      setTimeout(() => {
-        spawnBirdAndEgg();
-        scheduleBird();
-      }, delay);
-    }
-    scheduleBird();
-
-    updateUI();
-  </script>
-
+  <script src="main.js"></script>
 </body>
 </html>
